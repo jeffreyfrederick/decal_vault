@@ -676,36 +676,6 @@ h1.title:not(:last-child) {
   background-color: rgba($hunter-black, 0.015);
 }
 
-// Manage page - bare inputs/selects sit directly in table cells (no
-// .control wrapper), so they need an explicit width or they'd shrink to
-// fit their content.
-.manage-table input.input {
-  width: 100%;
-}
-
-.manage-table td {
-  padding-top: 0.75em;
-  padding-bottom: 0.75em;
-}
-
-// Each category is its own <table>, so Bulma's auto layout sizes columns
-// off each table's own content - one with a Delete button ends up with a
-// wider Actions column than its neighbors, throwing the Model Name inputs
-// out of alignment across boxes. Fixed widths keep them lined up.
-.manage-table {
-  table-layout: fixed;
-}
-
-.manage-table th:nth-child(2),
-.manage-table td:nth-child(2) {
-  width: 90px;
-}
-
-.manage-table th:nth-child(3),
-.manage-table td:nth-child(3) {
-  width: 230px;
-}
-
 .decal-count-link {
   text-decoration: underline;
 }

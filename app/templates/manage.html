@@ -16,28 +16,23 @@
   </h2>
 
   {% if models %}
-  <table class="table is-fullwidth manage-table">
-    <thead>
-      <tr>
-        <th>Model Name</th>
-        <th class="has-text-centered">Decals</th>
-        <th class="has-text-right">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for m in models %}
-      <tr>
-        <td>
-          <form id="model-form-{{ m.id }}" method="post" action="{{ url_for('main.rename_model', model_id=m.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          </form>
-          <input class="input" type="text" name="name" form="model-form-{{ m.id }}" value="{{ m.name }}">
-        </td>
-        <td class="has-text-centered">
-          <a class="decal-count-link" href="{{ url_for('main.index', model_id=m.id, status='all') }}">{{ m.decals | length }}</a>
-        </td>
-        <td class="has-text-right">
-          <div class="buttons are-small is-justify-content-flex-end">
+  <div class="model-rows-grid mb-4">
+    {% for m in models %}
+    <div class="model-row">
+      <form id="model-form-{{ m.id }}" method="post" action="{{ url_for('main.rename_model', model_id=m.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      </form>
+      <div class="control mb-2">
+        <input class="input" type="text" name="name" form="model-form-{{ m.id }}" value="{{ m.name }}">
+      </div>
+      <div class="level is-mobile mb-0">
+        <div class="level-left">
+          <a class="decal-count-link is-size-6" href="{{ url_for('main.index', model_id=m.id, status='all') }}">
+            {{ m.decals | length }} decal{{ '' if m.decals | length == 1 else 's' }}
+          </a>
+        </div>
+        <div class="level-right">
+          <div class="buttons are-small mb-0">
             <button class="button is-small" type="submit" form="model-form-{{ m.id }}">
               <span class="icon-text">
                 <span class="icon is-small"><img src="{{ icon_url('checkmark') }}" alt=""></span>
@@ -56,14 +51,14 @@
               </button>
             </form>
             {% else %}
-            <span class="has-text-grey-light">In use</span>
+            <span class="has-text-grey-light is-size-6">In use</span>
             {% endif %}
           </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
   {% else %}
   <p class="has-text-grey mb-4">No models yet in this category.</p>
   {% endif %}
