@@ -277,10 +277,7 @@
     });
   }
 
-  // Subcategory text only means something once a category is picked, so
-  // keep it readonly (not disabled - a disabled field wouldn't submit at
-  // all, which would throw off the category/text pairing on other rows)
-  // until then.
+  // readonly, not disabled, so an empty row still submits and keeps rows paired.
   function filterSubcategoryRow(row) {
     var categorySelect = row.querySelector('.model-category-select');
     var textInput = row.querySelector('input[name="subcategory_text"]');

@@ -29,9 +29,7 @@ def create_app(config_class=Config):
     app.jinja_env.globals["category_icon_name"] = category_icon_name
 
     def asset_version(relative_static_path):
-        # Appended as a ?v= query param so browsers fetch a fresh copy
-        # whenever the file changes, instead of serving a stale cached
-        # one indefinitely under an unversioned URL.
+        # Used as a ?v= cache-busting query param.
         path = os.path.join(app.static_folder, relative_static_path)
         return int(os.path.getmtime(path))
 
@@ -39,13 +37,7 @@ def create_app(config_class=Config):
 
     @app.after_request
     def no_cache_pages(response):
-        # Page responses had no cache-control at all, leaving it up to each
-        # browser's own heuristics - which is exactly why a fixed CSS bug
-        # could still show up as "broken" in one browser and not another,
-        # depending on whether it decided to reuse a stale cached page
-        # (with a stale ?v= on the stylesheet link) instead of refetching.
-        # Static assets are unaffected - those are already safely cached
-        # long-term since their URL changes whenever their content does.
+        # Static assets are versioned via asset_version and stay cacheable.
         if not request.path.startswith("/static/"):
             response.headers["Cache-Control"] = "no-store"
         return response

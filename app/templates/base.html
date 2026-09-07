@@ -4,17 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <!--
-    hunter.com stays light even with the OS set to dark. Bulma 1.x
-    auto-generates a prefers-color-scheme: dark override that would flip
-    this page's background/text to $scheme-invert otherwise -
-    data-theme="light" forces Bulma's [data-theme=light] rules instead,
-    which win at equal specificity since they're declared after that media
-    query. color-scheme meta stops native controls (date pickers,
-    scrollbars) from dark-styling too.
-  -->
+  <!-- data-theme="light": hunter.com never goes dark, even if the OS does -->
   <title>Hunter Decals | {% block title %}DecalVault{% endblock %}</title>
-  <!-- hunter.com's own favicon set, pulled directly from their site -->
   <link rel="icon" href="{{ url_for('static', filename='favicons/favicon.ico') }}" sizes="any">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-16x16.png') }}" sizes="16x16">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-32x32.png') }}" sizes="32x32">

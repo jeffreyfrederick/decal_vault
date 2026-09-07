@@ -7,9 +7,7 @@ from flask import url_for
 
 COLORS = {"black", "gray", "red", "white"}
 
-# Equipment category -> product icon, matched on a lowercase substring
-# rather than an exact value. Unmatched categories fall back to a
-# generic tool icon.
+# Equipment category -> product icon, matched on a lowercase substring; falls back to "tools".
 _CATEGORY_ICONS = (
     ("tire changer", "product-tire-changer"),
     ("align", "product-alignment-equipment"),

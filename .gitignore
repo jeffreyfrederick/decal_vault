@@ -20,8 +20,7 @@ instance/
 # Secrets (see .env.example)
 .env
 
-# Local convenience script for running behind a Cloudflare quick tunnel -
-# not part of the app itself.
+# Local convenience script, not part of the app.
 start_tunnel.sh
 
 # Uploads (keep the directory, ignore its contents)
@@ -37,7 +36,7 @@ Thumbs.db
 .idea/
 *.swp
 
-# AI tooling / assistant artifacts - not part of this project's authored source
+# AI tooling artifacts
 CLAUDE.md
 CLAUDE.local.md
 **/CLAUDE.md

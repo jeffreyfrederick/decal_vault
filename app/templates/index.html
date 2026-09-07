@@ -400,10 +400,7 @@
   categoryFilter.addEventListener('change', filterModelOptions);
   filterModelOptions();
 
-  // Rows size independently by default, so a row with a thumbnail (or a
-  // decal with a lot of model badges wrapping to another line) ends up
-  // taller than a plain text row next to it. Measure every row's natural
-  // height and stretch them all to match the tallest one.
+  // Match every row's height to the tallest one (thumbnails/wrapped tags vary).
   function equalizeTableRowHeights() {
     var rows = document.querySelectorAll('table.table tbody tr:not(.details-row)');
     if (!rows.length) { return; }

@@ -141,10 +141,7 @@ def _delete_image_file(image_filename):
 
 
 def _parse_model_ids(form):
-    """Reads the repeatable model-picker rows from upload.html. Models come
-    from the existing set only - creating or renaming one happens on the
-    Manage page.
-    """
+    """Models come from the existing set only; creating/renaming happens on Manage."""
     models = []
     seen = set()
     for raw_id in form.getlist("model_id"):
@@ -268,11 +265,7 @@ def edit_decal(decal_id):
 
 
 def _parse_subcategories(form):
-    """Reads the repeatable subcategory-picker rows (see upload.html's
-    JS-managed row list). Each row pairs a category with a qualifier -
-    a blank row is skipped, but a filled-in one needs a category pick.
-    Returns (list of DecalSubcategory, error_message).
-    """
+    """Pairs subcategory_category/subcategory_text rows; blank rows are skipped."""
     categories = form.getlist("subcategory_category")
     texts = form.getlist("subcategory_text")
     subcategories = []
@@ -288,10 +281,7 @@ def _parse_subcategories(form):
 
 
 def _resolve_superseded_by(raw, exclude_id=None):
-    """Looks up a typed part number instead of offering a dropdown.
-    Returns (decal_id, error_message) - error_message is set when the
-    save should be blocked.
-    """
+    """Looks up a typed part number. Returns (decal_id, error_message)."""
     raw = (raw or "").strip()
     if not raw:
         return None, None
@@ -332,8 +322,7 @@ def toggle_status(decal_id):
 @bp.route("/decal/<int:decal_id>/delete", methods=["POST"])
 @staff_required
 def delete_decal(decal_id):
-    # Hard delete, for fixing bad data entry. Discontinued decals stay in
-    # the DB and get flagged instead - this route is only for mistakes.
+    # Hard delete, for mistakes only - discontinued decals get flagged, not deleted.
     decal = Decal.query.get_or_404(decal_id)
     part_number = decal.part_number
     _delete_image_file(decal.image_filename)

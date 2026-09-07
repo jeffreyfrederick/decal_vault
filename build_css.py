@@ -1,11 +1,5 @@
 """Compile app/static/css/custom.scss -> app/static/css/bulma-hunter.css.
-
-Needs Dart Sass (the `sass` CLI), not LibSass - Bulma 1.x's source uses
-the @use/@forward module system, which LibSass never implemented (and
-that project's dead now anyway). brew install dart-sass, or see
-https://sass-lang.com/install/.
-
-Run after changing custom.scss or upgrading the vendored Bulma source.
+Needs Dart Sass (`brew install dart-sass`), not LibSass.
 """
 import shutil
 import subprocess

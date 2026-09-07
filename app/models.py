@@ -8,8 +8,7 @@ STATUS_ACTIVE = "active"
 STATUS_DISCONTINUED = "discontinued"
 STATUSES = (STATUS_ACTIVE, STATUS_DISCONTINUED)
 
-# ISO 639-1 language codes, sorted by English name, for the decal Language
-# dropdown. decal.language stores just the code (e.g. "EN").
+# ISO 639-1 codes for the Language dropdown; decal.language stores just the code.
 LANGUAGES = (
     ("AB", "Abkhaz"),
     ("AA", "Afar"),
@@ -196,8 +195,7 @@ LANGUAGES = (
     ("ZU", "Zulu"),
 )
 
-# Fixed list, not free text. Add a new line here (and to app/icons.py's
-# icon mapping) when Hunter ships a new equipment category.
+# Fixed list. Add a line here (and to app/icons.py's mapping) for a new category.
 CATEGORIES = (
     "Tire Changer",
     "Aligner",
@@ -207,8 +205,7 @@ CATEGORIES = (
     "Inspection",
 )
 
-# Many-to-many: a decal applies to multiple models, normally, not as an
-# edge case.
+# Many-to-many: a decal can apply to multiple models.
 decal_models = db.Table(
     "decal_models",
     db.Column("decal_id", db.Integer, db.ForeignKey("decal.id"), primary_key=True),
@@ -237,17 +234,13 @@ class Decal(db.Model):
     description = db.Column(db.String(500))
     notes = db.Column(db.Text)
     image_filename = db.Column(db.String(255))
-    # Original filename, kept for display only. image_filename above is a
-    # generated UUID and is what's actually used on disk.
-    original_filename = db.Column(db.String(255), nullable=True)
+    original_filename = db.Column(db.String(255), nullable=True)  # display only; image_filename is the on-disk UUID name
 
     language = db.Column(db.String(20), nullable=False, default="EN")
     status = db.Column(db.String(20), nullable=False, default=STATUS_ACTIVE, index=True)
 
     models = db.relationship("EquipmentModel", secondary=decal_models, back_populates="decals")
-    # Each qualifier (Adapter, Sensor, etc) is scoped to one category, so a
-    # decal spanning multiple categories can have a different one per
-    # category - or several for the same one.
+    # Each qualifier is scoped to one category - see DecalSubcategory.
     subcategories = db.relationship(
         "DecalSubcategory", back_populates="decal", cascade="all, delete-orphan", order_by="DecalSubcategory.category"
     )
