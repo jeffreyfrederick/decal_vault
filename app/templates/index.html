@@ -136,40 +136,42 @@
       </div>
       <div class="card-content">
         <p class="title is-5 mb-2">{{ decal.part_number }}</p>
-        <div class="tags mb-2">
-          {% for m in decal.models | sort(attribute='category,name') %}<span class="tag tag-model">{{ m.name }}</span>{% endfor %}
-        </div>
-        <div class="tags mb-2">
-          {% for c in decal.models | sort(attribute='category,name') | map(attribute='category') | unique %}
-          <span class="tags has-addons mb-0">
-            <span class="tag is-dark">
-              <span class="icon-text">
-                <span class="icon is-small"><img src="{{ icon_url(category_icon_name(c), 'white') }}" alt=""></span>
-                <span>{{ c }}</span>
+        <div class="decal-card-badges">
+          <div class="tags mb-2">
+            {% for m in decal.models | sort(attribute='category,name') %}<span class="tag tag-model">{{ m.name }}</span>{% endfor %}
+          </div>
+          <div class="tags mb-2">
+            {% for c in decal.models | sort(attribute='category,name') | map(attribute='category') | unique %}
+            <span class="tags has-addons mb-0">
+              <span class="tag is-dark">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url(category_icon_name(c), 'white') }}" alt=""></span>
+                  <span>{{ c }}</span>
+                </span>
               </span>
+              {% for sc in decal.subcategories %}
+                {% if sc.category == c %}<span class="tag tag-subcategory">{{ sc.subcategory }}</span>{% endif %}
+              {% endfor %}
             </span>
-            {% for sc in decal.subcategories %}
-              {% if sc.category == c %}<span class="tag tag-subcategory">{{ sc.subcategory }}</span>{% endif %}
             {% endfor %}
-          </span>
-          {% endfor %}
-        </div>
-        <div class="tags mb-2">
-          {% if decal.status == 'active' %}
-            <span class="tag is-success">
-              <span class="icon-text">
-                <span class="icon is-small"><img src="{{ icon_url('checkmark-circle', 'white') }}" alt=""></span>
-                <span>Active</span>
+          </div>
+          <div class="tags mb-2">
+            {% if decal.status == 'active' %}
+              <span class="tag is-success">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url('checkmark-circle', 'white') }}" alt=""></span>
+                  <span>Active</span>
+                </span>
               </span>
-            </span>
-          {% else %}
-            <span class="tag is-danger">
-              <span class="icon-text">
-                <span class="icon is-small"><img src="{{ icon_url('x-circle', 'white') }}" alt=""></span>
-                <span>Discontinued</span>
+            {% else %}
+              <span class="tag is-danger">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url('x-circle', 'white') }}" alt=""></span>
+                  <span>Discontinued</span>
+                </span>
               </span>
-            </span>
-          {% endif %}
+            {% endif %}
+          </div>
         </div>
         {% if decal.description %}<p class="is-size-7 mt-2">{{ decal.description }}</p>{% endif %}
       </div>
@@ -412,5 +414,19 @@
 
   equalizeTableRowHeights();
   window.addEventListener('resize', equalizeTableRowHeights);
+
+  // Same idea for card view: badge counts vary per decal, so match every
+  // card's badge area to the tallest one, keeping descriptions aligned.
+  function equalizeCardBadgeHeights() {
+    var badgeAreas = document.querySelectorAll('.decal-card-badges');
+    if (!badgeAreas.length) { return; }
+    badgeAreas.forEach(function (el) { el.style.height = ''; });
+    var maxHeight = 0;
+    badgeAreas.forEach(function (el) { maxHeight = Math.max(maxHeight, el.getBoundingClientRect().height); });
+    badgeAreas.forEach(function (el) { el.style.height = maxHeight + 'px'; });
+  }
+
+  equalizeCardBadgeHeights();
+  window.addEventListener('resize', equalizeCardBadgeHeights);
 </script>
 {% endblock %}

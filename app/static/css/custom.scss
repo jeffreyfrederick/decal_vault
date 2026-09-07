@@ -299,6 +299,13 @@ h1.title:not(:last-child) {
   flex: 1 1 auto;
 }
 
+// Reserves room for ~2 lines of model tags plus a category and status line,
+// so the description below starts at the same height on every card
+// regardless of how many tags a given decal has.
+.decal-card-badges {
+  min-height: 6.75rem;
+}
+
 .decal-card .card-footer {
   flex-shrink: 0;
 }
