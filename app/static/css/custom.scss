@@ -228,15 +228,15 @@ h1.title:not(:last-child) {
 
 // All-caps button labels have no descenders (g/y/p), but the font's own
 // line-box metrics still reserve descender space below the baseline as
-// if they might - measured directly (canvas text metrics against our
-// actual button font/size): the label's own line box has 0.82px more
-// empty space below the ink than above it, on top of an otherwise
-// perfectly box-centered icon+text group. Shift the label up by half
-// that (visual only - position:relative doesn't affect box sizing, so
-// button height stays exactly what the line-height fix above set it to).
+// if they might, leaving more empty space below the ink than above it.
+// The exact amount is font-rendering-specific (rendered ascent/descent
+// varies by browser/OS), so this is a deliberately generous, whole-pixel
+// value rather than a value calculated against one specific environment -
+// visual only, position:relative doesn't affect box sizing, so button
+// height stays exactly what the line-height fix above set it to.
 .button .icon-text > span:last-child {
   position: relative;
-  top: 0.4px;
+  top: 1px;
 }
 
 

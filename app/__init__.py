@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, request
 
 from config import Config
 
@@ -36,6 +36,19 @@ def create_app(config_class=Config):
         return int(os.path.getmtime(path))
 
     app.jinja_env.globals["asset_version"] = asset_version
+
+    @app.after_request
+    def no_cache_pages(response):
+        # Page responses had no cache-control at all, leaving it up to each
+        # browser's own heuristics - which is exactly why a fixed CSS bug
+        # could still show up as "broken" in one browser and not another,
+        # depending on whether it decided to reuse a stale cached page
+        # (with a stale ?v= on the stylesheet link) instead of refetching.
+        # Static assets are unaffected - those are already safely cached
+        # long-term since their URL changes whenever their content does.
+        if not request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     db.init_app(app)
     init_csrf(app)
