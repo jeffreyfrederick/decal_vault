@@ -13,7 +13,6 @@ from flask import (
     session,
     url_for,
 )
-from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
 
@@ -29,6 +28,7 @@ from .models import (
     EquipmentModel,
     db,
 )
+from .search import rank_decals
 
 bp = Blueprint("main", __name__)
 
@@ -60,9 +60,6 @@ def index():
 
     query = Decal.query.outerjoin(Decal.models)
 
-    if q:
-        like = f"%{q}%"
-        query = query.filter(or_(Decal.part_number.ilike(like), Decal.description.ilike(like)))
     if model_id:
         query = query.filter(EquipmentModel.id == model_id)
     if category:
@@ -73,8 +70,15 @@ def index():
         query = query.filter(Decal.status == status)
     # status == "all" (or anything unrecognized) leaves both statuses in view
 
-    query = query.order_by(SORT_OPTIONS.get(sort, SORT_OPTIONS["part_number"]))
-    decals = query.distinct().all()
+    if q:
+        # Free-text search replaces the SQL-level sort with relevance
+        # ranking: score every decal that survives the filters above, then
+        # order by score. See app/search.py for the ranking rules.
+        candidates = query.distinct().all()
+        decals = rank_decals(candidates, q)
+    else:
+        query = query.order_by(SORT_OPTIONS.get(sort, SORT_OPTIONS["part_number"]))
+        decals = query.distinct().all()
 
     all_categories = [c for (c,) in db.session.query(EquipmentModel.category).distinct().order_by(EquipmentModel.category)]
     models = EquipmentModel.query.order_by(EquipmentModel.category, EquipmentModel.name).all()
