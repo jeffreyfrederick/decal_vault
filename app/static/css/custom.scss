@@ -1,0 +1,786 @@
+// custom.scss - Hunter brand overrides for Bulma 1.x.
+// Compiled to bulma-hunter.css via build_css.py (needs Dart Sass, not
+// LibSass - Bulma 1.x's @use/@forward isn't supported there).
+// Don't hand-edit bulma-hunter.css, it's generated.
+
+$hunter-black: #0d111a;
+$hunter-white: #ffffff;
+$hunter-red: #c00c00;
+// From hunter.com's .ds2c-button CSS vars (ds2-main.css). Hover is
+// brighter than the base red, not darker.
+$hunter-red-hover: #d30d00;
+$hunter-red-active: #900900;
+$hunter-button-disabled: #525866; // same value as $hunter-divider-gray below
+$hunter-link-on-black: #858b97; // brand spec "Link Text on Black"
+$hunter-disabled: #bcc1cc;
+// Sampled from hunter.com's footer-divider-stripes element. Not in the
+// official brand hex table, but it's their actual color.
+$hunter-divider-gray: #525866;
+// hunter.com's --ds2v-color-neutral-darker, used for their header icon
+// button hover. Their plain nav links don't have a hover state at all, so
+// this is the only real hover color to borrow.
+$hunter-nav-hover: #373f4d;
+// The icon set's "Black" (fill #1f2533 in static/icons/Black) - a dark
+// navy, not the same as $hunter-black. Used for select chevrons and focus.
+$hunter-icon-black: #1f2533;
+// Icon set's "Gray" (#888e9a) - default color for unfocused field icons.
+$hunter-icon-gray: #888e9a;
+
+// Bulma's stock success/danger (bright mint, candy pink) look like a
+// generic UI kit next to Hunter red/black. Deeper, desaturated instead.
+$hunter-success: #1f7a4a;
+$hunter-warning: #a8710a;
+$hunter-danger: #7a1420;
+// Muted steel blue for the Subcategory badge (Adapter, Sensor, etc) -
+// same depth as the status colors but its own hue, so it reads as a
+// different kind of tag.
+$hunter-subcategory: #2d5f7c;
+
+// Roboto for body copy, Roboto Flex for everything else (headings, nav,
+// table headers, buttons, tags) - matches hunter.com's own
+// [class^="ds2c-"] rule. Roboto Condensed was an earlier guess before I
+// found their real font. Self-hosted under static/fonts, no font CDN.
+// @font-face has to come after @use/@forward, so it's further down.
+$family-roboto: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+$family-flex: "Roboto Flex", $family-roboto;
+
+// Bulma 1.x config goes through `with (...)` on @use instead of !default
+// vars before @import like 0.x. Colors decompose into HSL custom
+// properties (--bulma-primary-h/-s/-l etc), which drives the automatic
+// hover/active/dark-mode shades.
+@use "bulma/sass" with (
+  $black: $hunter-black,
+  $white: $hunter-white,
+  $primary: $hunter-red,
+  $link: $hunter-red,
+  $dark: $hunter-black,
+  $success: $hunter-success,
+  $warning: $hunter-warning,
+  $danger: $hunter-danger,
+  // Bulma pins "dark" token lightness to $dark-l regardless of the hex
+  // passed for $dark. Without setting this, .is-dark stuff renders at
+  // Bulma's default 20% lightness instead of Hunter black's real 7.65%.
+  $dark-l: 7.65%,
+  $text: #000000,
+  $text-invert: #ffffff,
+  $scheme-main: $hunter-white,
+  $scheme-invert: $hunter-black,
+  $input-disabled-color: $hunter-disabled,
+  $input-disabled-border-color: $hunter-disabled,
+  // Bulma caps navbar <img> at 1.75rem/28px by default, meant for a small
+  // square mark. Our logo renders ~35px tall (see .navbar-logo), so it'd
+  // clip without raising this.
+  $navbar-item-img-max-height: 2.5rem,
+  // hunter.com's .headerv2-block is 60px tall, taller than Bulma's 52px
+  // default.
+  $navbar-height: 60px,
+  $family-primary: $family-roboto,
+  $family-secondary: $family-roboto,
+  $title-family: $family-flex,
+  $subtitle-family: $family-flex,
+  // Tighter than Bulma's stock radii - reads crisper, less rounded.
+  $radius-small: 0.1875rem,
+  $radius: 0.25rem,
+  $radius-medium: 0.375rem,
+  $radius-large: 0.5rem
+);
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("../fonts/roboto-normal-var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Roboto";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/roboto-italic-400.woff2") format("woff2");
+}
+// This is a genuinely different variable typeface from Roboto, not just a
+// heavier weight - has its own width/grade axes, which is why bumping
+// font-weight alone never matched. Same woff2 file hunter.com's own header
+// loads, pulled straight from their site.
+@font-face {
+  font-family: "Roboto Flex";
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../fonts/roboto-flex-variable.woff2") format("woff2");
+}
+
+// ---------------------------------------------------------------------------
+// Type rhythm: Roboto Flex + uppercase for headings, nav, buttons, table
+// headers. Plain Roboto stays for anything meant to be read at length.
+// ---------------------------------------------------------------------------
+
+// hunter.com actually uses font-smoothing: auto, not the forced
+// antialiasing this app guessed at first (strokes read visibly thinner
+// until this got reset). Plus their real Roboto Flex axis values - "wdth"
+// 70 matters most, since font-weight alone undersold how bold their text
+// looks. Set once on html since both properties inherit and are no-ops on
+// plain Roboto, which doesn't have these axes.
+html {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  font-optical-sizing: auto;
+  font-variation-settings:
+    "GRAD" 0, "XOPQ" 96, "XTRA" 468, "YOPQ" 79, "YTAS" 750, "YTDE" -203,
+    "YTFI" 738, "YTLC" 514, "YTUC" 712, "slnt" 0, "wdth" 70;
+}
+
+// Matches hunter.com's "Shop Hunter" h1: Roboto Flex, weight 900,
+// uppercase, centered, red rule underneath. Scoped to h1.title only -
+// decal cards use a smaller .title.is-5 for the part number, which
+// shouldn't become a big centered headline.
+h1.title {
+  font-family: $family-flex;
+  font-size: 2.75rem;
+  font-weight: 900;
+  line-height: 1.5; // hunter.com's real value; the gap above the glyph is leading, not margin
+  letter-spacing: normal;
+  text-transform: uppercase;
+  text-align: center;
+  color: $hunter-black;
+}
+
+// Bulma's .title:not(:last-child) rule outranks plain h1.title on
+// specificity, so it wins regardless of source order unless matched here.
+h1.title:not(:last-child) {
+  margin-bottom: 0;
+}
+
+// Real element instead of a ::after - a generated pseudo-element inside a
+// line-height'd heading rendered a different gap in Firefox vs Chromium.
+// margin-bottom here (not the subtitle's margin-top) carries the spacing,
+// so pages with no subtitle (Admin Login, Add/Edit Decal) still get it.
+.hero-divider {
+  width: 50px;
+  height: 3px;
+  margin: 0.5rem auto 1rem;
+  background-color: $hunter-red;
+}
+
+.subtitle {
+  font-family: $family-flex;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5; // 24px here, matches hunter.com; Bulma's default rendered closer to 20px
+  letter-spacing: normal;
+  text-align: center;
+  color: $hunter-black;
+  margin-top: 0; // spacing above comes from .hero-divider's margin-bottom instead
+  margin-bottom: 1rem;
+}
+
+.tag,
+.table thead th,
+.label {
+  font-family: $family-flex;
+  font-weight: 600;
+}
+
+::selection {
+  background: $hunter-red;
+  color: $hunter-white;
+}
+
+// ---------------------------------------------------------------------------
+// Icons - the icon set ships as SVG pre-rendered in four flat colors
+// rather than one currentColor file, so recoloring means picking the
+// right variant via icon_url(), not CSS. Bulma's .icon only sizes a font
+// glyph by default, not a child <img>, so that's added below.
+// ---------------------------------------------------------------------------
+
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+// Bulma's icon-text defaults to align-items: flex-start, meant for a font
+// glyph sharing the text's line-height. Our <img> icons don't, so they
+// end up top-aligned instead of centered. Every use here is a single-line
+// icon+label pair, so just center them.
+.icon-text {
+  align-items: center;
+}
+
+// The icon+label group is centered as a box via justify-content, but the
+// icons themselves (filter funnel, refresh arrows) don't fill their
+// square evenly - more empty space on the trailing side, so the pair
+// reads left-of-center even though the box math is exact. Nudge it right.
+.button .icon-text {
+  margin-left: 0.3rem;
+}
+
+// For placeholder/empty-state icons - dial back opacity instead of adding
+// a fifth color variant.
+.icon-muted {
+  opacity: 0.45;
+}
+
+// Bulma sizes the icon slot to the full input height regardless of icon
+// size - fine for a font glyph scaled by font-size, but our <img> fills
+// it at 100% and renders oversized. Cap the glyph, leave the box alone.
+.control.has-icons-left .icon img,
+.control.has-icons-right .icon img,
+.control.has-icons-left .icon .icon-mask,
+.control.has-icons-right .icon .icon-mask {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+// The icon slot's box height comes from --bulma-input-height (still the
+// default 40px), which our .input's literal 44px height below doesn't
+// touch - so the icon centers itself 4px high. Match it directly.
+.control.has-icons-left .icon,
+.control.has-icons-right .icon {
+  height: 44px;
+  width: 44px;
+}
+
+// ---------------------------------------------------------------------------
+// Navbar - matches hunter.com's header: plain dark bar, no bottom edge,
+// full-bleed instead of boxed, flat uppercase links, brand items on the
+// left and account actions pushed right. Wordmark gets its own treatment
+// instead of the default nav-item styles.
+// ---------------------------------------------------------------------------
+
+// `.navbar > .container` is what makes brand/menu sit side by side instead
+// of stacking, but .container also caps width and centers itself, which
+// fights hunter.com's full-bleed bar. Override just the boxing.
+//
+// The !important is needed because Bulma's own responsive width rule
+// (`.container:not(.is-max-tablet):not(.is-max-desktop)...`) out-specifies
+// a plain two-class override on max-width, so without it the bar stays
+// boxed at 1344px regardless of source order.
+//
+// navbar-brand/-menu carry a small negative edge margin that's meant to
+// cancel a boxed container's own padding - on our full-bleed bar it
+// leaves Browse/Admin flush against the viewport edge. 1rem padding here
+// restores the gap and matches hunter.com's own header spacing.
+.navbar > .container {
+  max-width: none !important;
+  margin: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.navbar-brand .navbar-item {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+// hunter-logo-white-red.png is their actual production logo file, pulled
+// from their live header, sized to match their own 140px max-width rule.
+// Real asset instead of a redrawn approximation. height: auto keeps it
+// proportional.
+.navbar-logo {
+  max-width: 140px;
+  height: auto;
+}
+
+.navbar-wordmark {
+  margin-left: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba($hunter-white, 0.25);
+  font-family: $family-flex;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  color: $hunter-white;
+}
+
+// Matches hunter.com's nav link typography (font-variation axes are
+// global, see the html rule above). Their labels are all-caps in the CMS
+// itself, not via CSS, but ours are mixed-case in the templates, so
+// text-transform: uppercase is what gets the same result here.
+.navbar-item,
+.navbar-link {
+  font-family: $family-flex;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: uppercase;
+}
+
+// Matches hunter.com's .main-nav-link padding. Scoped to Browse/Admin/
+// Logout only - the brand logo has its own tuned padding above.
+.navbar-start .navbar-item,
+.navbar-end .navbar-item {
+  padding: 1rem;
+}
+
+// hunter.com's real header icon-button hover color ($hunter-nav-hover).
+// Bulma's auto-computed .is-dark hover is barely visible against a
+// near-black bar, so set explicitly. Scoped away from the brand logo,
+// which isn't a nav action.
+.navbar.is-dark .navbar-start a.navbar-item:hover,
+.navbar.is-dark .navbar-end a.navbar-item:hover,
+.navbar.is-dark .navbar-link:hover {
+  background-color: $hunter-nav-hover;
+  color: $hunter-white;
+}
+
+// Kill Bulma's barely-visible default hover shade on the brand link too.
+.navbar.is-dark .navbar-brand a.navbar-item:hover {
+  background-color: transparent;
+}
+
+// Plain white here, not the brand guide's muted "Link Text on Black" -
+// better contrast against the dark bar. The muted tone still applies
+// elsewhere (footer, dark cards).
+.navbar.is-dark a {
+  color: $hunter-white;
+}
+
+// "Link Text on Black" from the brand guide, for footer/dark-card links
+// (not the navbar - see above).
+.footer.is-dark a, .has-background-black a {
+  color: $hunter-link-on-black;
+}
+
+// Bulma's navbar-start/-end only center in the space left over after the
+// brand, which drifts off-center since brand and account link are
+// different widths. A 3-column grid with matched side columns actually
+// centers the middle column. `display: contents` lifts navbar-start/-end
+// out of navbar-menu (kept for the mobile toggle) so they become direct
+// grid children. 18rem fits the brand lockup and mirrors on the other
+// side just to keep column 2 centered.
+@media screen and (min-width: 1024px) {
+  .navbar > .container {
+    display: grid;
+    grid-template-columns: 18rem 1fr 18rem;
+  }
+
+  .navbar-menu {
+    display: contents;
+  }
+
+  .navbar-start {
+    justify-content: center;
+    margin-inline-end: 0;
+  }
+
+  .navbar-end {
+    justify-content: flex-end;
+    margin-inline-start: 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Surfaces - hairline border plus a soft, wide shadow instead of Bulma's
+// flat single-layer default. Reads more like a panel than a flat card.
+// ---------------------------------------------------------------------------
+
+.box,
+.card {
+  border: 1px solid rgba($hunter-black, 0.06);
+  box-shadow:
+    0 1px 2px rgba($hunter-black, 0.05),
+    0 10px 30px -12px rgba($hunter-black, 0.18);
+}
+
+// Card grid (browse page "Cards" toggle) - same panel treatment, plus a
+// hover lift since these are clickable, unlike the static filter box.
+//
+// Equal-height cards: .columns already stretches each column to the
+// tallest one per row, but .card only wraps its own content, so shorter
+// cards' borders/shadows stop short. Flex the column so the card fills
+// it, and flex the card itself so .card-content can grow, pinning the
+// footer to the bottom no matter how much text a decal has above it.
+.decal-card-grid .column {
+  display: flex;
+  // Bulma's default column padding isn't enough clearance for the card's
+  // drop shadow, which bled into the row below. Extra bottom padding
+  // pushes the next row down without touching the horizontal gutter.
+  padding-bottom: 1.75rem;
+}
+
+.decal-card {
+  // z-index (not just position: relative) gives each card its own
+  // stacking context - without it, the absolutely-positioned
+  // .decal-card-details overlay has nowhere local to paint and ends up
+  // behind sibling cards later in the DOM. Bumped further below when a
+  // card's details panel is open, so it paints above every other card.
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.decal-card:has(> .decal-card-details:not(.is-hidden)) {
+  z-index: 30;
+}
+
+.decal-card .card-image {
+  flex-shrink: 0;
+}
+
+.decal-card .card-content {
+  flex: 1 1 auto;
+}
+
+.decal-card .card-footer {
+  flex-shrink: 0;
+}
+
+.decal-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba($hunter-black, 0.06),
+    0 16px 32px -12px rgba($hunter-black, 0.22);
+}
+
+// The "Details" panel is an absolute overlay, not normal flow - a decal
+// with a long note shouldn't stretch the whole row and force every card
+// next to it taller. It floats free below its own card, overlapping
+// whatever's underneath (fine, it's a transient popover).
+.decal-card-details {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: -1px; // overlap the card's own bottom border for a seamless seam
+  padding: 1rem;
+  background-color: $hunter-white;
+  border: 1px solid rgba($hunter-black, 0.06);
+  border-top: none;
+  border-radius: 0 0 var(--bulma-radius-large) var(--bulma-radius-large);
+  box-shadow: 0 16px 32px -8px rgba($hunter-black, 0.28);
+
+  p {
+    margin-bottom: 0.5rem;
+  }
+
+  p:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.decal-card-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background-color: rgba($hunter-black, 0.03);
+  font-family: $family-flex;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+// "Details" uses the black icon variant, but its link text was inheriting
+// Bulma's link red - text and icon read as unrelated colors. "Edit" isn't
+// touched; its icon is already the red variant, so it matches by default.
+.card-footer-item.toggle-details {
+  color: $hunter-icon-black;
+}
+
+// ---------------------------------------------------------------------------
+// Buttons - matches hunter.com's .ds2c-button: heavy uppercase weight,
+// tight 3px radius, brighter on hover / darker on press (not the earlier
+// single darken-on-hover guess). Structural properties apply to every
+// button; the hover/active colors below are specifically their red
+// variant, matched to .is-primary.
+// ---------------------------------------------------------------------------
+
+.button {
+  font-family: $family-flex;
+  font-weight: 900;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  border-radius: 0.1875rem; // matches their button radius exactly (3px)
+  // Their design system's "small" tier (the one their real Add to Cart
+  // button uses), nudged up slightly rather than jumping to their medium
+  // tier, which read oversized here. Extra horizontal padding since our
+  // buttons pair an icon with a label edge-to-edge, unlike their plain
+  // text/font-glyph buttons, which read cramped at their literal spacing.
+  padding: 0.5625rem 0.8125rem;
+  font-size: 0.875rem;
+  border-width: 0.09375rem;
+  transition: background-color 0.4s, border-color 0.4s, color 0.4s, box-shadow 0.4s;
+}
+
+// Their "small" tier at their own mobile breakpoint - smaller again, and
+// just as real. Fits our card/table action buttons (Details, Edit,
+// Delete, Mark Discontinued) well.
+.button.is-small {
+  border-radius: 0.16rem;
+  padding: 0.4375rem 0.5625rem;
+  font-size: 0.6875rem;
+  border-width: 0.075rem;
+}
+
+.button.is-primary {
+  border-color: transparent;
+}
+
+.button.is-primary:hover,
+.button.is-primary.is-hovered {
+  background-color: $hunter-red-hover;
+  border-color: transparent;
+  box-shadow: 0 0 0.75rem 0 rgba($hunter-black, 0.3);
+}
+
+.button.is-primary:active,
+.button.is-primary.is-active {
+  background-color: $hunter-red-active;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.button[disabled],
+.button.is-primary[disabled] {
+  background-color: $hunter-button-disabled;
+  border-color: $hunter-button-disabled;
+  color: $hunter-white;
+  opacity: 0.15;
+}
+
+// ---------------------------------------------------------------------------
+// Form controls - Bulma sizes .input/.select off a fixed 40px control
+// height, independent of the button sizing above. Once buttons got
+// resized to match hunter.com, they no longer lined up with a same-row
+// input by a couple pixels. Matched to the button's real rendered height.
+// ---------------------------------------------------------------------------
+
+.input,
+.select select {
+  height: 44px;
+}
+
+// The .select wrapper (hosts the chevron) gets its height from a
+// compile-time Sass variable, separate from the inner <select>'s height
+// above - our override never touched it, so the chevron centered itself
+// on a 40px assumption against an actually-44px control. Match it here.
+.select:not(.is-multiple) {
+  height: 44px;
+}
+
+// Bulma ties the chevron color to $link (brand red) by default. Want the
+// icon set's black instead.
+.select {
+  --bulma-arrow-color: #{$hunter-icon-black};
+}
+
+// Same swap for focus color - simpler as a direct override than fighting
+// Bulma's HSL custom-property chain.
+.input:focus,
+.input.is-focused,
+.textarea:focus,
+.textarea.is-focused,
+.select select:focus,
+.select select.is-focused {
+  border-color: $hunter-icon-black;
+  box-shadow: 0 0 0 0.125em rgba($hunter-icon-black, 0.25);
+}
+
+// Field icons (search/lock/barcode) are pre-colored SVG <img>s, so
+// `color` can't recolor them. Mask instead - shape only, from the alpha
+// channel - so background-color can respond to :focus like any other
+// property. Gray by default, black when focused. --icon-mask-url is set
+// inline per field.
+.icon-mask {
+  display: inline-block; // <span> is inline by default; width/height are no-ops without this
+  background-color: $hunter-icon-gray;
+  transition: background-color 0.15s ease;
+  -webkit-mask-image: var(--icon-mask-url);
+  mask-image: var(--icon-mask-url);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.input:focus ~ .icon .icon-mask {
+  background-color: $hunter-icon-black;
+}
+
+// ---------------------------------------------------------------------------
+// Table - the primary UI, so it gets the most deliberate treatment:
+// condensed letter-spaced headers under a red rule, and a faint
+// red-tinted row hover for quick part-number scanning.
+// ---------------------------------------------------------------------------
+
+.table thead th {
+  color: $hunter-black;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  border-bottom: 2px solid $hunter-red;
+  padding-top: 0.9em;
+  padding-bottom: 0.9em;
+}
+
+// The sortable headers are <a> tags inside the <th>, so without this they
+// pick up the browser's own link colors - red before a click, then the
+// default grayish :visited purple after - instead of matching the rest.
+.table thead th a,
+.table thead th a:visited {
+  color: inherit;
+}
+
+.table.is-hoverable tbody tr:not(.details-row):hover {
+  background-color: rgba($hunter-red, 0.045);
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.details-row td {
+  background-color: rgba($hunter-black, 0.015);
+}
+
+// Manage page - bare inputs/selects sit directly in table cells (no
+// .control wrapper), so they need an explicit width or they'd shrink to
+// fit their content.
+.manage-table input.input {
+  width: 100%;
+}
+
+.manage-table td {
+  padding-top: 0.75em;
+  padding-bottom: 0.75em;
+}
+
+// Each category is its own <table>, so Bulma's auto layout sizes columns
+// off each table's own content - one with a Delete button ends up with a
+// wider Actions column than its neighbors, throwing the Model Name inputs
+// out of alignment across boxes. Fixed widths keep them lined up.
+.manage-table {
+  table-layout: fixed;
+}
+
+.manage-table th:nth-child(2),
+.manage-table td:nth-child(2) {
+  width: 90px;
+}
+
+.manage-table th:nth-child(3),
+.manage-table td:nth-child(3) {
+  width: 230px;
+}
+
+.decal-count-link {
+  text-decoration: underline;
+}
+
+// Decals routinely carry many models - full-width rows waste space and
+// turn a long list into scrolling. A grid fits several per line, each
+// row its own small card (category+remove on top, model dropdown below)
+// rather than one wide control, since a 4-up grid is too narrow to fit
+// category and model side by side without truncating names like "HawkEye
+// Elite X".
+.model-rows-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 1023px) {
+  .model-rows-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .model-rows-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.model-row {
+  border: 1px solid rgba($hunter-black, 0.1);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+
+// Bulma's .field.is-grouped gap doesn't match this card's own padding, so
+// the category/remove gap read wider than the rest. Match it.
+.model-row .field.is-grouped {
+  gap: 0.5rem;
+}
+
+// Bold since category determines which models are even selectable below
+// it, and needs to read at a glance across a grid of many rows.
+.model-category-select {
+  font-weight: 700;
+}
+
+// Icon-only buttons compute a couple pixels shorter than the icon+text
+// ones .button was tuned against, so this sat visibly higher than the
+// 44px category select next to it. Match the height directly.
+.remove-model-row {
+  height: 44px;
+}
+
+// ---------------------------------------------------------------------------
+// Tags - condensed uppercase, a touch more horizontal padding than
+// Bulma's default so short status words don't look cramped.
+// ---------------------------------------------------------------------------
+
+.tag:not(body) {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-left: 0.85em;
+  padding-right: 0.85em;
+}
+
+// White fill, black outline instead of solid - reads as a lighter-weight
+// identifier next to the solid Category/Status tags.
+.tag.tag-model {
+  background-color: $hunter-white;
+  color: $hunter-black;
+  border: 1px solid $hunter-black;
+}
+
+// Solid fill, unlike the model tag's outline, so Subcategory (Adapter,
+// Sensor) reads as its own kind of label - a decal-level attribute shown
+// once, not attached to any single model.
+.tag.tag-subcategory {
+  background-color: $hunter-subcategory;
+  color: $hunter-white;
+}
+
+// ---------------------------------------------------------------------------
+// Footer - pinned to the bottom on short pages (empty search results,
+// login) via a standard flexbox sticky-footer.
+//
+// The divider strip above it is straight from hunter.com's own
+// .footer-divider-stripes - a two-color gradient, not a border/shadow.
+// ---------------------------------------------------------------------------
+
+.site-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-main {
+  flex: 1 0 auto;
+  // Bulma's default section padding left far more air above the heading
+  // than hunter.com's real spacing (15px, navbar to h1).
+  padding-top: 15px;
+}
+
+.footer-divider-stripes {
+  flex-shrink: 0;
+  height: 10px;
+  background-image: linear-gradient($hunter-disabled 33%, $hunter-divider-gray 0);
+}
+
+.footer {
+  flex-shrink: 0;
+}

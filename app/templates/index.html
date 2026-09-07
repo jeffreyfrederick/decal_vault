@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% block title %}Browse Library{% endblock %}
+
+{% block content %}
+<h1 class="title">Decal Library</h1>
+<div class="hero-divider"></div>
+<p class="subtitle">Look up Hunter equipment decals by part number, description, model, or category.</p>
+
+<form method="get" action="{{ url_for('main.index') }}" class="box">
+  <input type="hidden" name="view" value="{{ filters.view }}">
+  <div class="field is-grouped is-grouped-multiline">
+
+    <div class="control is-expanded">
+      <label class="label is-small">Search</label>
+      <div class="control has-icons-left">
+        <input class="input" type="text" name="q" placeholder="Part number or description" value="{{ filters.q }}">
+        <span class="icon is-small is-left"><span class="icon-mask" style="--icon-mask-url: url('{{ icon_url('search', 'black') }}');"></span></span>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">Category</label>
+      <div class="select">
+        <select name="category" id="category-filter">
+          <option value="">All categories</option>
+          {% for c in all_categories %}
+            <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">Model</label>
+      <div class="select">
+        <select name="model_id" id="model-filter">
+          <option value="">All models</option>
+          {% for m in models %}
+            <option value="{{ m.id }}" data-category="{{ m.category }}" {% if filters.model_id == m.id %}selected{% endif %}>{{ m.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">Language</label>
+      <div class="select">
+        <select name="language">
+          <option value="">All languages</option>
+          {% for l in languages %}
+            <option value="{{ l }}" {% if filters.language == l %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">Status</label>
+      <div class="select">
+        <select name="status">
+          <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active only</option>
+          <option value="discontinued" {% if filters.status == 'discontinued' %}selected{% endif %}>Discontinued only</option>
+          <option value="all" {% if filters.status == 'all' %}selected{% endif %}>All</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">Sort by</label>
+      <div class="select">
+        <select name="sort">
+          <option value="part_number" {% if filters.sort == 'part_number' %}selected{% endif %}>Part Number</option>
+          <option value="model" {% if filters.sort == 'model' %}selected{% endif %}>Model</option>
+          <option value="category" {% if filters.sort == 'category' %}selected{% endif %}>Category</option>
+          <option value="status" {% if filters.sort == 'status' %}selected{% endif %}>Status</option>
+          <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label is-small">&nbsp;</label>
+      <button class="button is-primary" type="submit">
+        <span class="icon-text">
+          <span class="icon is-small"><img src="{{ icon_url('filter', 'white') }}" alt=""></span>
+          <span>Filter</span>
+        </span>
+      </button>
+    </div>
+    <div class="control">
+      <label class="label is-small">&nbsp;</label>
+      <a class="button" href="{{ url_for('main.index') }}">
+        <span class="icon-text">
+          <span class="icon is-small"><img src="{{ icon_url('rotate-counter-clockwise') }}" alt=""></span>
+          <span>Reset</span>
+        </span>
+      </a>
+    </div>
+  </div>
+</form>
+
+<div class="level mb-4">
+  <div class="level-left"></div>
+  <div class="level-right">
+    <div class="buttons has-addons">
+      <a class="button is-small {{ 'is-primary is-selected' if filters.view != 'cards' else '' }}"
+         href="{{ url_for('main.index', **dict(request.args.to_dict(), view='table')) }}" aria-label="Table view" title="Table view">
+        <span class="icon is-small"><img src="{{ icon_url('list', 'white' if filters.view != 'cards' else 'black') }}" alt=""></span>
+      </a>
+      <a class="button is-small {{ 'is-primary is-selected' if filters.view == 'cards' else '' }}"
+         href="{{ url_for('main.index', **dict(request.args.to_dict(), view='cards')) }}" aria-label="Cards view" title="Cards view">
+        <span class="icon is-small"><img src="{{ icon_url('grid', 'white' if filters.view == 'cards' else 'black') }}" alt=""></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if decals %}
+{% if filters.view == 'cards' %}
+<div class="columns is-multiline decal-card-grid">
+  {% for decal in decals %}
+  <div class="column is-3-desktop is-4-tablet is-6-mobile">
+    <div class="card decal-card">
+      <div class="card-image">
+        {% if decal.image_filename %}
+        <figure class="image is-4by3">
+          <img src="{{ url_for('static', filename='uploads/' + decal.image_filename) }}"
+               alt="{{ decal.part_number }}" class="decal-thumb" data-full="{{ url_for('static', filename='uploads/' + decal.image_filename) }}"
+               style="object-fit: contain; cursor: pointer;">
+        </figure>
+        {% else %}
+        <figure class="image is-4by3 decal-card-placeholder">
+          <span class="icon is-medium icon-muted"><img src="{{ icon_url('photo', 'gray') }}" alt="No image"></span>
+        </figure>
+        {% endif %}
+      </div>
+      <div class="card-content">
+        <p class="title is-5 mb-2">{{ decal.part_number }}</p>
+        <div class="tags mb-2">
+          {% for m in decal.models | sort(attribute='category,name') %}<span class="tag tag-model">{{ m.name }}</span>{% endfor %}
+        </div>
+        <div class="tags mb-2">
+          {% for c in decal.models | sort(attribute='category,name') | map(attribute='category') | unique %}
+          <span class="tags has-addons mb-0">
+            <span class="tag is-dark">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url(category_icon_name(c), 'white') }}" alt=""></span>
+                <span>{{ c }}</span>
+              </span>
+            </span>
+            {% if decal.subcategory %}<span class="tag tag-subcategory">{{ decal.subcategory }}</span>{% endif %}
+          </span>
+          {% endfor %}
+        </div>
+        <div class="tags mb-2">
+          {% if decal.status == 'active' %}
+            <span class="tag is-success">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('checkmark-circle', 'white') }}" alt=""></span>
+                <span>Active</span>
+              </span>
+            </span>
+          {% else %}
+            <span class="tag is-danger">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('x-circle', 'white') }}" alt=""></span>
+                <span>Discontinued</span>
+              </span>
+            </span>
+          {% endif %}
+        </div>
+        {% if decal.description %}<p class="is-size-7 mt-2">{{ decal.description }}</p>{% endif %}
+      </div>
+      <footer class="card-footer">
+        <a class="card-footer-item toggle-details" data-target="card-details-{{ decal.id }}" style="cursor: pointer;">
+          <span class="icon-text">
+            <span class="icon is-small"><img src="{{ icon_url('tooltip-info') }}" alt=""></span>
+            <span>Details</span>
+          </span>
+        </a>
+        {% if session.get('staff_authenticated') %}
+        <a class="card-footer-item" href="{{ url_for('main.edit_decal', decal_id=decal.id) }}">
+          <span class="icon-text">
+            <span class="icon is-small"><img src="{{ icon_url('edit-pencil', 'red') }}" alt=""></span>
+            <span>Edit</span>
+          </span>
+        </a>
+        {% endif %}
+      </footer>
+      <div class="decal-card-details is-hidden" id="card-details-{{ decal.id }}">
+        <p><strong>Notes:</strong> {{ decal.notes or '-' }}</p>
+        <p><strong>Language:</strong> {{ decal.language }}</p>
+        {% if decal.superseded_by %}
+          <p><strong>Superseded by:</strong> {{ decal.superseded_by.part_number }}</p>
+        {% endif %}
+        {% if session.get('staff_authenticated') %}
+        <div class="buttons are-small mt-2">
+          <form method="post" action="{{ url_for('main.toggle_status', decal_id=decal.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button is-small is-warning" type="submit">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('alarm-on' if decal.status == 'active' else 'alarm-off', 'white') }}" alt=""></span>
+                <span>Mark {{ 'Discontinued' if decal.status == 'active' else 'Active' }}</span>
+              </span>
+            </button>
+          </form>
+          <form method="post" action="{{ url_for('main.delete_decal', decal_id=decal.id) }}"
+                onsubmit="return confirm('Permanently delete decal {{ decal.part_number }}? This cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button is-small is-danger" type="submit">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('trashcan', 'white') }}" alt=""></span>
+                <span>Delete</span>
+              </span>
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="table-container">
+  <table class="table is-fullwidth is-hoverable">
+    <thead>
+      <tr>
+        <th class="has-text-centered">Thumb</th>
+        <th><a href="{{ url_for('main.index', **dict(request.args.to_dict(), sort='part_number')) }}">Part Number</a></th>
+        <th><a href="{{ url_for('main.index', **dict(request.args.to_dict(), sort='model')) }}">Model(s)</a></th>
+        <th><a href="{{ url_for('main.index', **dict(request.args.to_dict(), sort='category')) }}">Category</a></th>
+        <th class="has-text-centered"><a href="{{ url_for('main.index', **dict(request.args.to_dict(), sort='status')) }}">Status</a></th>
+        <th class="has-text-centered">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for decal in decals %}
+      <tr>
+        <td class="has-text-centered">
+          {% if decal.image_filename %}
+          <img src="{{ url_for('static', filename='uploads/' + decal.image_filename) }}"
+               alt="{{ decal.part_number }}" class="decal-thumb" data-full="{{ url_for('static', filename='uploads/' + decal.image_filename) }}"
+               style="width:48px;height:48px;object-fit:contain;cursor:pointer;">
+          {% else %}
+          <span class="has-text-grey-light">-</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ decal.part_number }}</strong></td>
+        <td>
+          <div class="tags">
+            {% for m in decal.models | sort(attribute='category,name') %}<span class="tag tag-model">{{ m.name }}</span>{% endfor %}
+          </div>
+        </td>
+        <td>
+          <div class="tags">
+            {% for c in decal.models | sort(attribute='category,name') | map(attribute='category') | unique %}
+            <span class="tags has-addons mb-0">
+              <span class="tag is-dark">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url(category_icon_name(c), 'white') }}" alt=""></span>
+                  <span>{{ c }}</span>
+                </span>
+              </span>
+              {% if decal.subcategory %}<span class="tag tag-subcategory">{{ decal.subcategory }}</span>{% endif %}
+            </span>
+            {% endfor %}
+          </div>
+        </td>
+        <td class="has-text-centered">
+          {% if decal.status == 'active' %}
+            <span class="tag is-success">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('checkmark-circle', 'white') }}" alt=""></span>
+                <span>Active</span>
+              </span>
+            </span>
+          {% else %}
+            <span class="tag is-danger">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('x-circle', 'white') }}" alt=""></span>
+                <span>Discontinued</span>
+              </span>
+            </span>
+          {% endif %}
+        </td>
+        <td class="has-text-centered">
+          <div class="buttons are-small is-justify-content-center">
+            <button class="button is-small toggle-details" data-target="details-{{ decal.id }}">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('tooltip-info') }}" alt=""></span>
+                <span>Details</span>
+              </span>
+            </button>
+            {% if session.get('staff_authenticated') %}
+            <a class="button is-small" href="{{ url_for('main.edit_decal', decal_id=decal.id) }}">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('edit-pencil', 'red') }}" alt=""></span>
+                <span>Edit</span>
+              </span>
+            </a>
+            <form method="post" action="{{ url_for('main.delete_decal', decal_id=decal.id) }}"
+                  onsubmit="return confirm('Permanently delete decal {{ decal.part_number }}? This cannot be undone.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="button is-small is-danger" type="submit">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url('trashcan', 'white') }}" alt=""></span>
+                  <span>Delete</span>
+                </span>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      <tr class="details-row is-hidden" id="details-{{ decal.id }}">
+        <td></td>
+        <td colspan="5">
+          <div class="content">
+            <p><strong>Description:</strong> {{ decal.description or '-' }}</p>
+            <p><strong>Notes:</strong> {{ decal.notes or '-' }}</p>
+            <p><strong>Language:</strong> {{ decal.language }}</p>
+            {% if decal.superseded_by %}
+              <p><strong>Superseded by:</strong> {{ decal.superseded_by.part_number }}</p>
+            {% endif %}
+            {% if session.get('staff_authenticated') %}
+            <form method="post" action="{{ url_for('main.toggle_status', decal_id=decal.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="button is-small is-warning" type="submit">
+                <span class="icon-text">
+                  <span class="icon is-small"><img src="{{ icon_url('alarm-on' if decal.status == 'active' else 'alarm-off', 'white') }}" alt=""></span>
+                  <span>Mark {{ 'Discontinued' if decal.status == 'active' else 'Active' }}</span>
+                </span>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% else %}
+<div class="notification">
+  <span class="icon-text">
+    <span class="icon icon-muted"><img src="{{ icon_url('search', 'gray') }}" alt=""></span>
+    <span>No decals match these filters.</span>
+  </span>
+</div>
+{% endif %}
+
+<div class="modal" id="image-modal">
+  <div class="modal-background"></div>
+  <div class="modal-content has-text-centered">
+    <p class="image is-inline-block"><img id="image-modal-img" src="" alt=""></p>
+  </div>
+  <button class="modal-close is-large" aria-label="close"></button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.toggle-details').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById(btn.dataset.target).classList.toggle('is-hidden');
+    });
+  });
+
+  var modal = document.getElementById('image-modal');
+  var modalImg = document.getElementById('image-modal-img');
+  document.querySelectorAll('.decal-thumb').forEach(function (img) {
+    img.addEventListener('click', function () {
+      modalImg.src = img.dataset.full;
+      modal.classList.add('is-active');
+    });
+  });
+  modal.querySelectorAll('.modal-background, .modal-close').forEach(function (el) {
+    el.addEventListener('click', function () { modal.classList.remove('is-active'); });
+  });
+
+  var categoryFilter = document.getElementById('category-filter');
+  var modelFilter = document.getElementById('model-filter');
+
+  function filterModelOptions() {
+    var selectedCategory = categoryFilter.value;
+    Array.from(modelFilter.options).forEach(function (opt) {
+      if (!opt.value) { return; }
+      var matches = !selectedCategory || opt.dataset.category === selectedCategory;
+      opt.hidden = !matches;
+      if (!matches && opt.selected) { modelFilter.value = ''; }
+    });
+  }
+
+  categoryFilter.addEventListener('change', filterModelOptions);
+  filterModelOptions();
+
+  // Rows size independently by default, so a row with a thumbnail (or a
+  // decal with a lot of model badges wrapping to another line) ends up
+  // taller than a plain text row next to it. Measure every row's natural
+  // height and stretch them all to match the tallest one.
+  function equalizeTableRowHeights() {
+    var rows = document.querySelectorAll('table.table tbody tr:not(.details-row)');
+    if (!rows.length) { return; }
+    rows.forEach(function (row) { row.style.height = ''; });
+    var maxHeight = 0;
+    rows.forEach(function (row) { maxHeight = Math.max(maxHeight, row.getBoundingClientRect().height); });
+    rows.forEach(function (row) { row.style.height = maxHeight + 'px'; });
+  }
+
+  equalizeTableRowHeights();
+  window.addEventListener('resize', equalizeTableRowHeights);
+</script>
+{% endblock %}

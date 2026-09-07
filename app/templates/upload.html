@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Decal' if decal else 'Add Decal' }}{% endblock %}
+
+{% block content %}
+<h1 class="title">{{ 'Edit Decal: ' + decal.part_number if decal else 'Add Decal' }}</h1>
+<div class="hero-divider"></div>
+
+<form method="post" enctype="multipart/form-data" class="box"
+      action="{{ url_for('main.edit_decal', decal_id=decal.id) if decal else url_for('main.upload') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field">
+    <label class="label">Part Number</label>
+    <div class="control has-icons-left">
+      <input class="input" type="text" name="part_number" value="{{ decal.part_number if decal else '' }}" required>
+      <span class="icon is-small is-left"><span class="icon-mask" style="--icon-mask-url: url('{{ icon_url('barcode-scan', 'black') }}');"></span></span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Description</label>
+    <div class="control">
+      <input class="input" type="text" name="description" value="{{ decal.description or '' if decal else '' }}">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Models</label>
+    <div id="model-rows" class="model-rows-grid">
+      {% for m in (decal.models if decal and decal.models else [None]) %}
+      <div class="model-row">
+        <div class="field is-grouped mb-2">
+          <div class="control is-expanded">
+            <div class="select is-fullwidth">
+              <select class="model-category-select">
+                <option value="">Category…</option>
+                {% for c in categories %}
+                  <option value="{{ c }}" {% if m and m.category == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="control remove-model-control">
+            <button type="button" class="button remove-model-row" aria-label="Remove model" title="Remove model">
+              <span class="icon is-small"><img src="{{ icon_url('x') }}" alt=""></span>
+            </button>
+          </div>
+        </div>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="model_id" class="model-select" {% if not m %}disabled{% endif %}>
+              <option value="" {% if not m %}selected{% endif %} disabled>{{ 'Select a category first…' if not m else 'Select a model…' }}</option>
+              {% for opt in models %}
+                <option value="{{ opt.id }}" data-category="{{ opt.category }}" {% if m and m.id == opt.id %}selected{% endif %}>{{ opt.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-model-row" class="button is-small mt-3">
+      <span class="icon-text">
+        <span class="icon is-small"><img src="{{ icon_url('plus') }}" alt=""></span>
+        <span id="add-model-row-label">Add Model</span>
+      </span>
+    </button>
+    <p class="help">
+      At least one model is required. Most decals apply to more than one model - add a row for each.
+      Not seeing the model you need? Add it on the <a href="{{ url_for('main.manage') }}">Manage</a> page first.
+    </p>
+  </div>
+
+  <div class="field is-grouped">
+    <div class="control">
+      <label class="label">Language</label>
+      <div class="select">
+        <select name="language">
+          {% for code, name in languages %}
+            <option value="{{ code }}" {% if (decal.language if decal else 'EN') == code %}selected{% endif %}>{{ code }} - {{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label">Status</label>
+      <div class="select">
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if (decal.status if decal else 'active') == s %}selected{% endif %}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label">Subcategory</label>
+      <input class="input" type="text" name="subcategory" value="{{ decal.subcategory or '' if decal else '' }}" placeholder="Adapter, Sensor, ..." style="width: 12em;">
+      <p class="help">Optional - applies across every model listed above, not just one of them.</p>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Superseded By</label>
+    <div class="control">
+      <input class="input" type="text" name="superseded_by" value="{{ decal.superseded_by.part_number if decal and decal.superseded_by else '' }}" placeholder="Part number">
+    </div>
+    <p class="help">If this part number was replaced, enter the part number of the decal that replaced it - it must already exist. Only relevant once this decal is discontinued.</p>
+  </div>
+
+  <div class="field">
+    <label class="label">Notes</label>
+    <div class="control">
+      <textarea class="textarea" name="notes" rows="2">{{ decal.notes or '' if decal else '' }}</textarea>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Image</label>
+    {% if decal and decal.image_filename %}
+    <div class="mb-2">
+      <figure class="image is-128x128">
+        <img src="{{ url_for('static', filename='uploads/' + decal.image_filename) }}" alt="{{ decal.part_number }}" style="object-fit: contain;">
+      </figure>
+      <p class="help">Current image - choose a new file below to replace it, or leave blank to keep it.</p>
+    </div>
+    {% endif %}
+    <div class="control">
+      <span class="icon-text">
+        <label class="button is-small" for="image-input">
+          <span class="icon-text">
+            <span class="icon is-small"><img src="{{ icon_url('upload') }}" alt=""></span>
+            <span>Choose Image</span>
+          </span>
+        </label>
+        <span id="image-filename" class="ml-2 is-size-7 has-text-grey">{{ (decal.original_filename or decal.image_filename) if decal and decal.image_filename else 'No file chosen' }}</span>
+      </span>
+      <input type="file" id="image-input" name="image" accept="image/*" class="is-hidden">
+    </div>
+    <figure class="image is-128x128 mt-2 is-hidden" id="image-preview-wrap">
+      <img id="image-preview" src="" alt="Preview">
+    </figure>
+  </div>
+
+  <div class="field is-grouped">
+    <div class="control">
+      <button class="button is-primary" type="submit">
+        <span class="icon-text">
+          <span class="icon is-small"><img src="{{ icon_url('checkmark', 'white') }}" alt=""></span>
+          <span>{{ 'Save Changes' if decal else 'Save Decal' }}</span>
+        </span>
+      </button>
+    </div>
+    <div class="control">
+      <a class="button" href="{{ url_for('main.index') }}">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('image-input').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    var wrap = document.getElementById('image-preview-wrap');
+    var preview = document.getElementById('image-preview');
+    var filenameLabel = document.getElementById('image-filename');
+    if (!file) {
+      wrap.classList.add('is-hidden');
+      filenameLabel.textContent = 'No file chosen';
+      return;
+    }
+    filenameLabel.textContent = file.name;
+    preview.src = URL.createObjectURL(file);
+    wrap.classList.remove('is-hidden');
+  });
+
+  var modelRows = document.getElementById('model-rows');
+
+  function updateRemoveButtons() {
+    var hideRemove = modelRows.children.length <= 1;
+    modelRows.querySelectorAll('.remove-model-control').forEach(function (control) {
+      control.classList.toggle('is-hidden', hideRemove);
+    });
+  }
+
+  function filterRowModels(row) {
+    var categorySelect = row.querySelector('.model-category-select');
+    var modelSelect = row.querySelector('.model-select');
+    var placeholder = modelSelect.options[0];
+    var selectedCategory = categorySelect.value;
+    modelSelect.disabled = !selectedCategory;
+    placeholder.text = selectedCategory ? 'Select a model…' : 'Select a category first…';
+    Array.from(modelSelect.options).forEach(function (opt) {
+      if (!opt.value) { return; }
+      var matches = selectedCategory && opt.dataset.category === selectedCategory;
+      opt.hidden = !matches;
+      if (!matches && opt.selected) { modelSelect.value = ''; }
+    });
+  }
+
+  function updateAddButtonLabel() {
+    var anySelected = Array.from(modelRows.querySelectorAll('.model-select')).some(function (s) { return s.value; });
+    document.getElementById('add-model-row-label').textContent = anySelected ? 'Add Another Model' : 'Add Model';
+  }
+
+  modelRows.addEventListener('change', function (e) {
+    if (e.target.classList.contains('model-category-select')) {
+      filterRowModels(e.target.closest('.model-row'));
+    }
+    if (e.target.classList.contains('model-category-select') || e.target.classList.contains('model-select')) {
+      updateAddButtonLabel();
+    }
+  });
+
+  document.getElementById('add-model-row').addEventListener('click', function () {
+    var newRow = modelRows.firstElementChild.cloneNode(true);
+    newRow.querySelectorAll('select').forEach(function (select) { select.selectedIndex = 0; });
+    filterRowModels(newRow);
+    modelRows.appendChild(newRow);
+    updateRemoveButtons();
+    updateAddButtonLabel();
+    newRow.querySelector('select').focus();
+  });
+
+  modelRows.addEventListener('click', function (e) {
+    var btn = e.target.closest('.remove-model-row');
+    if (!btn || modelRows.children.length <= 1) { return; }
+    btn.closest('.model-row').remove();
+    updateRemoveButtons();
+    updateAddButtonLabel();
+  });
+
+  modelRows.querySelectorAll('.model-row').forEach(filterRowModels);
+
+  updateRemoveButtons();
+  updateAddButtonLabel();
+</script>
+{% endblock %}

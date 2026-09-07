@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <!--
+    hunter.com stays light even with the OS set to dark. Bulma 1.x
+    auto-generates a prefers-color-scheme: dark override that would flip
+    this page's background/text to $scheme-invert otherwise -
+    data-theme="light" forces Bulma's [data-theme=light] rules instead,
+    which win at equal specificity since they're declared after that media
+    query. color-scheme meta stops native controls (date pickers,
+    scrollbars) from dark-styling too.
+  -->
+  <title>Hunter Decals | {% block title %}DecalVault{% endblock %}</title>
+  <!-- hunter.com's own favicon set, pulled directly from their site -->
+  <link rel="icon" href="{{ url_for('static', filename='favicons/favicon.ico') }}" sizes="any">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-16x16.png') }}" sizes="16x16">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-32x32.png') }}" sizes="32x32">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicons/apple-touch-icon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma-hunter.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="site-body">
+  <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+    <div class="container">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="{{ url_for('main.index') }}">
+          <img src="{{ url_for('static', filename='images/logo/hunter-logo-white-red.png') }}"
+               alt="Hunter Engineering" class="navbar-logo">
+          <span class="navbar-wordmark">Decals</span>
+        </a>
+        <a role="button" class="navbar-burger" id="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-menu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+      <div class="navbar-menu" id="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="{{ url_for('main.index') }}">Browse</a>
+          {% if session.get('staff_authenticated') %}
+            <a class="navbar-item" href="{{ url_for('main.upload') }}">Add Decal</a>
+            <a class="navbar-item" href="{{ url_for('main.manage') }}">Manage</a>
+          {% endif %}
+        </div>
+        <div class="navbar-end">
+          {% if session.get('staff_authenticated') %}
+            <a class="navbar-item" href="{{ url_for('main.logout') }}">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('logout', 'white') }}" alt=""></span>
+                <span>Logout</span>
+              </span>
+            </a>
+          {% else %}
+            <a class="navbar-item" href="{{ url_for('main.login') }}">
+              <span class="icon-text">
+                <span class="icon is-small"><img src="{{ icon_url('login', 'white') }}" alt=""></span>
+                <span>Admin</span>
+              </span>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section site-main">
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="notification is-{{ category }} is-light">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </section>
+
+  <div class="footer-divider-stripes"></div>
+  <footer class="footer has-background-black">
+    <div class="content has-text-centered has-text-white">
+      <p>Hunter Engineering Company, internal use only.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('navbar-burger').addEventListener('click', function () {
+      this.classList.toggle('is-active');
+      document.getElementById('navbar-menu').classList.toggle('is-active');
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

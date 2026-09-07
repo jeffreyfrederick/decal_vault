@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="columns is-centered">
+  <div class="column is-one-third">
+    <h1 class="title">Admin Login</h1>
+    <div class="hero-divider"></div>
+    <form method="post" class="box">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label class="label">Password</label>
+        <div class="control has-icons-left">
+          <input class="input" type="password" name="password" autofocus required>
+          <span class="icon is-small is-left"><span class="icon-mask" style="--icon-mask-url: url('{{ icon_url('lock', 'black') }}');"></span></span>
+        </div>
+      </div>
+      <div class="control">
+        <button class="button is-primary" type="submit">
+          <span class="icon-text">
+            <span class="icon is-small"><img src="{{ icon_url('login', 'white') }}" alt=""></span>
+            <span>Log in</span>
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
