@@ -70,30 +70,6 @@
     </p>
   </div>
 
-  <div class="field is-grouped">
-    <div class="control">
-      <label class="label">Language</label>
-      <div class="select">
-        <select name="language">
-          {% for code, name in languages %}
-            <option value="{{ code }}" {% if (decal.language if decal else 'EN') == code %}selected{% endif %}>{{ code }} - {{ name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-
-    <div class="control">
-      <label class="label">Status</label>
-      <div class="select">
-        <select name="status">
-          {% for s in statuses %}
-            <option value="{{ s }}" {% if (decal.status if decal else 'active') == s %}selected{% endif %}>{{ s|capitalize }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  </div>
-
   <div class="field">
     <label class="label">Subcategories</label>
     <div id="subcategory-rows" class="model-rows-grid">
@@ -117,7 +93,8 @@
           </div>
         </div>
         <div class="control">
-          <input class="input" type="text" name="subcategory_text" value="{{ sc.subcategory if sc else '' }}" placeholder="Adapter, Sensor, ...">
+          <input class="input" type="text" name="subcategory_text" value="{{ sc.subcategory if sc else '' }}"
+                 placeholder="{{ 'Adapter, Sensor, ...' if sc else 'Select a category first…' }}" {% if not sc %}readonly{% endif %}>
         </div>
       </div>
       {% endfor %}
@@ -129,6 +106,30 @@
       </span>
     </button>
     <p class="help">Optional - each one applies only to the category picked, not every model above.</p>
+  </div>
+
+  <div class="field is-grouped">
+    <div class="control">
+      <label class="label">Language</label>
+      <div class="select">
+        <select name="language">
+          {% for code, name in languages %}
+            <option value="{{ code }}" {% if (decal.language if decal else 'EN') == code %}selected{% endif %}>{{ code }} - {{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label class="label">Status</label>
+      <div class="select">
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if (decal.status if decal else 'active') == s %}selected{% endif %}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
   </div>
 
   <div class="field">
@@ -276,9 +277,23 @@
     });
   }
 
+  // Subcategory text only means something once a category is picked, so
+  // keep it readonly (not disabled - a disabled field wouldn't submit at
+  // all, which would throw off the category/text pairing on other rows)
+  // until then.
+  function filterSubcategoryRow(row) {
+    var categorySelect = row.querySelector('.model-category-select');
+    var textInput = row.querySelector('input[name="subcategory_text"]');
+    var hasCategory = !!categorySelect.value;
+    textInput.readOnly = !hasCategory;
+    textInput.placeholder = hasCategory ? 'Adapter, Sensor, ...' : 'Select a category first…';
+    if (!hasCategory) { textInput.value = ''; }
+  }
+
   document.getElementById('add-subcategory-row').addEventListener('click', function () {
     var newRow = subcategoryRows.firstElementChild.cloneNode(true);
     newRow.querySelectorAll('select, input').forEach(function (el) { el.value = ''; });
+    filterSubcategoryRow(newRow);
     subcategoryRows.appendChild(newRow);
     updateRemoveSubcategoryButtons();
     newRow.querySelector('select').focus();
@@ -290,6 +305,14 @@
     btn.closest('.subcategory-row').remove();
     updateRemoveSubcategoryButtons();
   });
+
+  subcategoryRows.addEventListener('change', function (e) {
+    if (e.target.classList.contains('model-category-select')) {
+      filterSubcategoryRow(e.target.closest('.subcategory-row'));
+    }
+  });
+
+  subcategoryRows.querySelectorAll('.subcategory-row').forEach(filterSubcategoryRow);
 
   updateRemoveSubcategoryButtons();
 </script>

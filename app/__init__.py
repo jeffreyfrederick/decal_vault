@@ -28,6 +28,15 @@ def create_app(config_class=Config):
     app.jinja_env.globals["icon_url"] = icon_url
     app.jinja_env.globals["category_icon_name"] = category_icon_name
 
+    def asset_version(relative_static_path):
+        # Appended as a ?v= query param so browsers fetch a fresh copy
+        # whenever the file changes, instead of serving a stale cached
+        # one indefinitely under an unversioned URL.
+        path = os.path.join(app.static_folder, relative_static_path)
+        return int(os.path.getmtime(path))
+
+    app.jinja_env.globals["asset_version"] = asset_version
+
     db.init_app(app)
     init_csrf(app)
 

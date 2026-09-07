@@ -19,7 +19,7 @@
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-16x16.png') }}" sizes="16x16">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicons/favicon-32x32.png') }}" sizes="32x32">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicons/apple-touch-icon.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma-hunter.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bulma-hunter.css') }}?v={{ asset_version('css/bulma-hunter.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body class="site-body">

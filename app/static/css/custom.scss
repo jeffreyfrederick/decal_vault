@@ -212,9 +212,33 @@ h1.title:not(:last-child) {
 // icons themselves (filter funnel, refresh arrows) don't fill their
 // square evenly - more empty space on the trailing side, so the pair
 // reads left-of-center even though the box math is exact. Nudge it right.
+//
+// Bulma also hardcodes icon-text's line-height to a fixed 1.5rem (24px)
+// regardless of button size or font-size, while a plain-text button gets
+// its line-height from the shared control mixin instead: an unitless 1.5,
+// which scales with the button's own font-size. That mismatch is what
+// made icon+text buttons taller than same-size plain-text ones (Save vs
+// Cancel) and threw off icon-vs-text centering on small buttons (Add
+// Model, Add Subcategory, Choose Image) - matching Bulma's own unitless
+// value here fixes both at once, at every button size.
 .button .icon-text {
   margin-left: 0.3rem;
+  line-height: 1.5;
 }
+
+// All-caps button labels have no descenders (g/y/p), but the font's own
+// line-box metrics still reserve descender space below the baseline as
+// if they might - measured directly (canvas text metrics against our
+// actual button font/size): the label's own line box has 0.82px more
+// empty space below the ink than above it, on top of an otherwise
+// perfectly box-centered icon+text group. Shift the label up by half
+// that (visual only - position:relative doesn't affect box sizing, so
+// button height stays exactly what the line-height fix above set it to).
+.button .icon-text > span:last-child {
+  position: relative;
+  top: 0.4px;
+}
+
 
 // For placeholder/empty-state icons - dial back opacity instead of adding
 // a fifth color variant.
@@ -605,6 +629,15 @@ h1.title:not(:last-child) {
 
 .input:focus ~ .icon .icon-mask {
   background-color: $hunter-icon-black;
+}
+
+// readonly (subcategory text before a category's picked) needs to read as
+// not-yet-available the same way a disabled field does, even though it's
+// readonly rather than disabled so it still submits with the form.
+.input[readonly] {
+  background-color: rgba($hunter-black, 0.03);
+  color: $hunter-disabled;
+  cursor: not-allowed;
 }
 
 // ---------------------------------------------------------------------------
