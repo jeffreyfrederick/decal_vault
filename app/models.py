@@ -243,11 +243,14 @@ class Decal(db.Model):
 
     language = db.Column(db.String(20), nullable=False, default="EN")
     status = db.Column(db.String(20), nullable=False, default=STATUS_ACTIVE, index=True)
-    # Optional qualifier (Adapter, Sensor, etc) for the decal as a whole -
-    # applies across every model below, not just one of them.
-    subcategory = db.Column(db.String(120), nullable=True)
 
     models = db.relationship("EquipmentModel", secondary=decal_models, back_populates="decals")
+    # Each qualifier (Adapter, Sensor, etc) is scoped to one category, so a
+    # decal spanning multiple categories can have a different one per
+    # category - or several for the same one.
+    subcategories = db.relationship(
+        "DecalSubcategory", back_populates="decal", cascade="all, delete-orphan", order_by="DecalSubcategory.category"
+    )
 
     # Optional pointer to the decal that replaced this one, when discontinued.
     superseded_by_id = db.Column(db.Integer, db.ForeignKey("decal.id"), nullable=True)
@@ -257,3 +260,14 @@ class Decal(db.Model):
 
     def __repr__(self):
         return f"<Decal {self.part_number}>"
+
+
+class DecalSubcategory(db.Model):
+    """One (category, qualifier) pair on a decal - see Decal.subcategories."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    decal_id = db.Column(db.Integer, db.ForeignKey("decal.id"), nullable=False)
+    category = db.Column(db.String(120), nullable=False)
+    subcategory = db.Column(db.String(120), nullable=False)
+
+    decal = db.relationship("Decal", back_populates="subcategories")

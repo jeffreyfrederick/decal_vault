@@ -148,7 +148,9 @@
                 <span>{{ c }}</span>
               </span>
             </span>
-            {% if decal.subcategory %}<span class="tag tag-subcategory">{{ decal.subcategory }}</span>{% endif %}
+            {% for sc in decal.subcategories %}
+              {% if sc.category == c %}<span class="tag tag-subcategory">{{ sc.subcategory }}</span>{% endif %}
+            {% endfor %}
           </span>
           {% endfor %}
         </div>
@@ -262,7 +264,9 @@
                   <span>{{ c }}</span>
                 </span>
               </span>
-              {% if decal.subcategory %}<span class="tag tag-subcategory">{{ decal.subcategory }}</span>{% endif %}
+              {% for sc in decal.subcategories %}
+                {% if sc.category == c %}<span class="tag tag-subcategory">{{ sc.subcategory }}</span>{% endif %}
+              {% endfor %}
             </span>
             {% endfor %}
           </div>

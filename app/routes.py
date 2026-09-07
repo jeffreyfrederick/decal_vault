@@ -18,7 +18,17 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
 
 from .auth import check_password, is_staff, staff_required
-from .models import CATEGORIES, LANGUAGES, STATUS_ACTIVE, STATUS_DISCONTINUED, STATUSES, Decal, EquipmentModel, db
+from .models import (
+    CATEGORIES,
+    LANGUAGES,
+    STATUS_ACTIVE,
+    STATUS_DISCONTINUED,
+    STATUSES,
+    Decal,
+    DecalSubcategory,
+    EquipmentModel,
+    db,
+)
 
 bp = Blueprint("main", __name__)
 
@@ -166,13 +176,18 @@ def upload():
             flash(superseded_by_error, "danger")
             return render_template("upload.html", **_upload_context())
 
+        subcategories, subcategory_error = _parse_subcategories(request.form)
+        if subcategory_error:
+            flash(subcategory_error, "danger")
+            return render_template("upload.html", **_upload_context())
+
         decal = Decal(
             part_number=part_number,
             description=request.form.get("description", "").strip() or None,
             notes=request.form.get("notes", "").strip() or None,
             language=request.form.get("language", "EN").strip() or "EN",
             status=request.form.get("status") if request.form.get("status") in STATUSES else STATUS_ACTIVE,
-            subcategory=request.form.get("subcategory", "").strip() or None,
+            subcategories=subcategories,
             models=models,
             superseded_by_id=superseded_by_id,
         )
@@ -218,12 +233,17 @@ def edit_decal(decal_id):
             flash(superseded_by_error, "danger")
             return render_template("upload.html", **_upload_context(decal))
 
+        subcategories, subcategory_error = _parse_subcategories(request.form)
+        if subcategory_error:
+            flash(subcategory_error, "danger")
+            return render_template("upload.html", **_upload_context(decal))
+
         decal.part_number = part_number
         decal.description = request.form.get("description", "").strip() or None
         decal.notes = request.form.get("notes", "").strip() or None
         decal.language = request.form.get("language", "EN").strip() or "EN"
         decal.status = request.form.get("status") if request.form.get("status") in STATUSES else decal.status
-        decal.subcategory = request.form.get("subcategory", "").strip() or None
+        decal.subcategories = subcategories
         decal.models = models
         decal.superseded_by_id = superseded_by_id
 
@@ -245,6 +265,26 @@ def edit_decal(decal_id):
         return redirect(url_for("main.index"))
 
     return render_template("upload.html", **_upload_context(decal))
+
+
+def _parse_subcategories(form):
+    """Reads the repeatable subcategory-picker rows (see upload.html's
+    JS-managed row list). Each row pairs a category with a qualifier -
+    a blank row is skipped, but a filled-in one needs a category pick.
+    Returns (list of DecalSubcategory, error_message).
+    """
+    categories = form.getlist("subcategory_category")
+    texts = form.getlist("subcategory_text")
+    subcategories = []
+    for category, text in zip(categories, texts):
+        text = text.strip()
+        category = category.strip()
+        if not text:
+            continue
+        if category not in CATEGORIES:
+            return None, "Pick which category each subcategory applies to."
+        subcategories.append(DecalSubcategory(category=category, subcategory=text))
+    return subcategories, None
 
 
 def _resolve_superseded_by(raw, exclude_id=None):

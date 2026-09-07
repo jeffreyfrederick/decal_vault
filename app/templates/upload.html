@@ -92,12 +92,43 @@
         </select>
       </div>
     </div>
+  </div>
 
-    <div class="control">
-      <label class="label">Subcategory</label>
-      <input class="input" type="text" name="subcategory" value="{{ decal.subcategory or '' if decal else '' }}" placeholder="Adapter, Sensor, ..." style="width: 12em;">
-      <p class="help">Optional - applies across every model listed above, not just one of them.</p>
+  <div class="field">
+    <label class="label">Subcategories</label>
+    <div id="subcategory-rows" class="model-rows-grid">
+      {% for sc in (decal.subcategories if decal and decal.subcategories else [None]) %}
+      <div class="model-row subcategory-row">
+        <div class="field is-grouped mb-2">
+          <div class="control is-expanded">
+            <div class="select is-fullwidth">
+              <select name="subcategory_category" class="model-category-select">
+                <option value="">Category…</option>
+                {% for c in categories %}
+                  <option value="{{ c }}" {% if sc and sc.category == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="control remove-subcategory-control">
+            <button type="button" class="button remove-subcategory-row" aria-label="Remove subcategory" title="Remove subcategory">
+              <span class="icon is-small"><img src="{{ icon_url('x') }}" alt=""></span>
+            </button>
+          </div>
+        </div>
+        <div class="control">
+          <input class="input" type="text" name="subcategory_text" value="{{ sc.subcategory if sc else '' }}" placeholder="Adapter, Sensor, ...">
+        </div>
+      </div>
+      {% endfor %}
     </div>
+    <button type="button" id="add-subcategory-row" class="button is-small mt-3">
+      <span class="icon-text">
+        <span class="icon is-small"><img src="{{ icon_url('plus') }}" alt=""></span>
+        <span>Add Subcategory</span>
+      </span>
+    </button>
+    <p class="help">Optional - each one applies only to the category picked, not every model above.</p>
   </div>
 
   <div class="field">
@@ -235,5 +266,31 @@
 
   updateRemoveButtons();
   updateAddButtonLabel();
+
+  var subcategoryRows = document.getElementById('subcategory-rows');
+
+  function updateRemoveSubcategoryButtons() {
+    var hideRemove = subcategoryRows.children.length <= 1;
+    subcategoryRows.querySelectorAll('.remove-subcategory-control').forEach(function (control) {
+      control.classList.toggle('is-hidden', hideRemove);
+    });
+  }
+
+  document.getElementById('add-subcategory-row').addEventListener('click', function () {
+    var newRow = subcategoryRows.firstElementChild.cloneNode(true);
+    newRow.querySelectorAll('select, input').forEach(function (el) { el.value = ''; });
+    subcategoryRows.appendChild(newRow);
+    updateRemoveSubcategoryButtons();
+    newRow.querySelector('select').focus();
+  });
+
+  subcategoryRows.addEventListener('click', function (e) {
+    var btn = e.target.closest('.remove-subcategory-row');
+    if (!btn || subcategoryRows.children.length <= 1) { return; }
+    btn.closest('.subcategory-row').remove();
+    updateRemoveSubcategoryButtons();
+  });
+
+  updateRemoveSubcategoryButtons();
 </script>
 {% endblock %}
