@@ -139,6 +139,10 @@ h1.title:not(:last-child) {
 
 .icon-text {
   align-items: center;
+  // Overrides Bulma's own flex-wrap: wrap, which let the icon and label
+  // split onto separate lines in a narrow tag/button, bleeding out of the
+  // pill's single-line-height background.
+  flex-wrap: nowrap;
 }
 
 // icon-text's line-height is unitless to match Bulma's own control
