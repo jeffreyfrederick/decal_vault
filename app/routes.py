@@ -71,9 +71,7 @@ def index():
     # status == "all" (or anything unrecognized) leaves both statuses in view
 
     if q:
-        # Free-text search replaces the SQL-level sort with relevance
-        # ranking: score every decal that survives the filters above, then
-        # order by score. See app/search.py for the ranking rules.
+        # Relevance ranking replaces the SQL sort here - see app/search.py.
         candidates = query.distinct().all()
         decals = rank_decals(candidates, q)
     else:

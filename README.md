@@ -8,9 +8,19 @@ Equipment hierarchy is Category → Model → Decal, with decals applying to
 multiple models as the normal case (e.g. one warning decal shared across a
 whole tire changer line). A decal can also carry subcategory qualifiers
 (e.g. "Adapter", "Sensor"), each scoped to a single category for decals
-that span more than one. Decals are searchable and filterable by part
-number, description, model, category, language, and status, with both a
-card grid and a sortable table view.
+that span more than one. Both a card grid and a sortable table view are
+available for browsing.
+
+The search box is a single free-text field, not one field per column: it
+looks across part number, model, description, category, language, and
+notes at once, normalizes punctuation/spacing so `175-1042-2`, `175 1042
+2`, and `17510422` all match, tolerates typos in descriptive text (never in
+part/model numbers), and ranks results by relevance rather than database
+order. A multi-word search requires every word to match somewhere (so
+`tcx50 shock` narrows to decals that are both TCX50 and about a shock
+hazard), with a bonus when the words also appear together as a phrase.
+Scoring rules live in `app/search.py`. Existing filters (model, category,
+language, status) still compose with a search.
 
 ## Stack
 

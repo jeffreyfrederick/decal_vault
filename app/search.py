@@ -1,29 +1,4 @@
-"""Search normalization and relevance scoring for the decal browse page.
-
-SQLite/SQLAlchemy has no built-in fuzzy or format-insensitive matching, and
-the number of decals is small (entered by hand by documentation staff), so
-scoring candidates in Python after a normal SQLAlchemy query is simpler to
-reason about than adding SQLite FTS5 or an external search dependency.
-
-A query is split into whitespace-separated terms and treated as an AND:
-each term is scored against a decal independently (see _score_term), and
-rank_decals only prefers decals that match every term, falling back to
-whichever decals matched the most terms if none match all of them. Scoring
-terms independently - rather than scoring the query as one string - matters
-for multi-word queries: normalizing "tcx50 shock" as a whole would strip the
-space and read as "tcx50shock", which happens to contain "tcx50" as a
-substring regardless of whether "shock" appears anywhere on the decal.
-
-On top of that term-level AND, a query of more than one term also gets a
-phrase check: if the words appear in the same order, adjacent, in one
-field (e.g. "back of device" literally in a description), that decal gets
-a bonus on top of its term-average score - see _phrase_match_bonus. This
-only ever adds to the term-based score, so it can't be the reason a decal
-matches; a decal still has to satisfy the AND requirement first.
-
-See routes.index for how this plugs into the existing category/model/
-language/status filters and sort.
-"""
+"""Relevance scoring for the decal search box - see routes.index for how this plugs into the existing filters/sort."""
 
 import difflib
 import re
@@ -36,10 +11,8 @@ _NON_ALNUM_RE = re.compile(r"[^a-z0-9]")
 _WHITESPACE_RE = re.compile(r"\s+")
 _NON_ALNUM_TO_SPACE_RE = re.compile(r"[^a-z0-9\s]")
 
-# Relevance tiers, highest first, matching the priority order the search is
-# meant to follow: part number, then model, then progressively looser text
-# matches. Named constants keep that order visible in one place instead of
-# scattered through _score_term.
+# Relevance tiers, highest first - named constants keep the priority order
+# visible in one place instead of scattered through _score_term.
 SCORE_PART_NUMBER_EXACT = 100
 SCORE_MODEL_EXACT = 90
 SCORE_IDENTIFIER_NORMALIZED_EXACT = 80
@@ -51,29 +24,18 @@ SCORE_CATEGORY_LANGUAGE_EXACT = 50
 SCORE_CATEGORY_LANGUAGE_PARTIAL = 45
 SCORE_OTHER_TEXT_EXACT = 40
 SCORE_OTHER_TEXT_FUZZY = 35
-
-# Added on top of a multi-term query's combined score when the whole query
-# appears as an exact, in-order phrase in one field (see _phrase_match_bonus)
-# - not a tier of its own, since it only ever boosts an existing AND match.
+# Added on top of a multi-term match when the query is also an exact phrase.
 PHRASE_MATCH_BONUS = 20
 
-# Below this difflib ratio, two words are treated as unrelated rather than a
-# typo of one another - tuned so "rotatonal" matches "rotational" without
-# starting to match unrelated words.
+# difflib ratio below which two words count as unrelated, not a typo.
 _FUZZY_RATIO_THRESHOLD = 0.78
-# Words shorter than this are never fuzzy-matched: short strings have too
-# many near neighbors for a similarity ratio to mean anything, and this also
-# keeps fuzzy matching away from short part-number-like fragments.
+# Words shorter than this are never fuzzy-matched (too many near-neighbors,
+# and it keeps fuzzy matching away from short identifier fragments).
 _FUZZY_MIN_WORD_LENGTH = 4
 
 
 def normalize_identifier(value):
-    """Lowercase and drop everything but letters/digits.
-
-    Used for part numbers and model numbers so "175-1042-2", "175 1042 2",
-    and "17510422" all compare equal. Only affects the search/compare step -
-    stored values are never touched.
-    """
+    """Lowercase and strip non-alphanumerics, so "175-1042-2"/"175 1042 2"/"17510422" compare equal."""
     if not value:
         return ""
     return _NON_ALNUM_RE.sub("", value.lower())
@@ -87,12 +49,7 @@ def normalize_text(value):
 
 
 def normalize_phrase(value):
-    """Lowercase, collapse whitespace, and turn punctuation into spaces -
-    for exact-phrase comparison. Unlike normalize_identifier, this keeps
-    words separate (never concatenates them), so word order is preserved
-    and "back-of-device"/"back, of device"/"Back of Device" all normalize
-    to the same "back of device" for a substring check.
-    """
+    """Like normalize_identifier but keeps words separate (spaces, not concatenated), preserving word order for phrase matching."""
     if not value:
         return ""
     return _WHITESPACE_RE.sub(" ", _NON_ALNUM_TO_SPACE_RE.sub(" ", value.lower())).strip()
@@ -110,10 +67,7 @@ def _fuzzy_word_in_text(term, text_words):
 
 
 def _text_field_score(term, field_text, exact_score, fuzzy_score):
-    """Score one natural-language field (description/notes/...) against a
-    single search term. Returns exact_score for a verbatim substring match,
-    fuzzy_score for a close (typo) variant, otherwise 0.
-    """
+    """Exact or fuzzy substring score for one term against one text field."""
     if not field_text or not term:
         return 0
     if term in field_text:
@@ -124,11 +78,7 @@ def _text_field_score(term, field_text, exact_score, fuzzy_score):
 
 
 def _decal_context(decal):
-    """Precompute one decal's normalized, searchable fields.
-
-    Computed once per decal per search rather than once per (decal, term)
-    pair, since a multi-term query scores the same decal repeatedly.
-    """
+    """Precompute one decal's normalized fields, once per decal per search."""
     part_number = decal.part_number or ""
     model_names = [m.name for m in decal.models]
     languages = {normalize_text(decal.language), normalize_text(_LANGUAGE_NAMES.get(decal.language, ""))}
@@ -143,8 +93,7 @@ def _decal_context(decal):
         "description": normalize_text(decal.description),
         "notes": normalize_text(decal.notes),
         "subcategory_text": normalize_text(" ".join(sc.subcategory for sc in decal.subcategories)),
-        # Punctuation-insensitive versions of the same free-text fields, used
-        # only for the exact-phrase bonus (see _phrase_match_bonus).
+        # Punctuation-insensitive versions, used only for the phrase bonus.
         "description_phrase": normalize_phrase(decal.description),
         "notes_phrase": normalize_phrase(decal.notes),
         "subcategory_phrase": normalize_phrase(" ".join(sc.subcategory for sc in decal.subcategories)),
@@ -152,19 +101,7 @@ def _decal_context(decal):
 
 
 def _score_term(context, term):
-    """Relevance score for a single search term against one decal's fields.
-
-    Higher is more relevant; 0 means the term doesn't appear anywhere on the
-    decal. Checks run in priority order (part number, then model, then
-    looser text matches) and return as soon as a tier matches, so the score
-    reflects the *best* reason this term matched rather than a sum across
-    fields.
-
-    Fuzzy (typo-tolerant) matching only applies to natural-language fields
-    (description, notes, subcategories, category/language names) - never to
-    part numbers or model numbers, where a near-miss should not silently
-    surface a different physical part.
-    """
+    """Highest matching tier for one search term against one decal; fuzzy matching never applies to part/model identifiers, only text fields."""
     term_lower = term.lower()
     term_id = normalize_identifier(term)
     term_text = normalize_text(term)
@@ -206,14 +143,7 @@ _PHRASE_FIELD_KEYS = ("description_phrase", "notes_phrase", "subcategory_phrase"
 
 
 def _phrase_match_bonus(query_phrase, context):
-    """PHRASE_MATCH_BONUS if the query's words appear together, in order, in
-    one field; 0 otherwise. query_phrase is expected to already be
-    normalize_phrase()'d.
-
-    This deliberately doesn't fuzzy-match: it's a bonus on top of a match
-    the term-level AND has already established, not a new way to match, so
-    there's no typo-tolerance requirement to satisfy here.
-    """
+    """PHRASE_MATCH_BONUS if the query's words appear together, in order, in one field, else 0 - no fuzzy matching, since this only boosts an already-established AND match."""
     if not query_phrase:
         return 0
     for field_key in _PHRASE_FIELD_KEYS:
@@ -223,15 +153,7 @@ def _phrase_match_bonus(query_phrase, context):
 
 
 def score_decal(decal, query):
-    """Combined relevance score for one decal against a whole query.
-
-    A multi-term query only scores above 0 here if every term matches
-    somewhere on the decal (the term scores are averaged, then boosted if
-    the query also appears as an exact phrase - see _phrase_match_bonus).
-    This is a convenience for scoring one decal in isolation; rank_decals is
-    what actually decides, across a whole result set, whether to require
-    every term or fall back to partial coverage - see its docstring.
-    """
+    """Score one decal against a query (average of per-term scores, all terms required, plus phrase bonus) - a single-decal convenience; rank_decals decides AND-vs-fallback across a result set."""
     terms = normalize_text(query).split()
     if not terms:
         return 0
@@ -246,26 +168,7 @@ def score_decal(decal, query):
 
 
 def rank_decals(decals, query):
-    """Score, filter, and sort decals against a free-text search query.
-
-    Terms (whitespace-separated words in the query) are ANDed together: a
-    decal ranks among the results only if it matches every term, so adding
-    a word narrows the results instead of just nudging relevance order.
-    If no decal matches every term, this falls back to whichever decals
-    matched the most terms - e.g. for "tcx50 zzz" with no decal matching
-    "zzz" anywhere, decals matching "tcx50" alone are shown rather than
-    nothing at all - but a decal matching only one of several terms is never
-    shown if some other decal matches more of them.
-
-    Within a coverage group, decals are ranked by the average score of
-    their matched terms plus a phrase-match bonus (see _phrase_match_bonus),
-    then by part number for a stable order. A decal with every term
-    scattered across different fields and one with the exact phrase both
-    satisfy the AND requirement the same way, but the phrase bonus pushes
-    the latter to the top - e.g. for "back of device", a description that
-    literally reads "Back of Device" outranks one that just happens to
-    mention "back", "of", and "device" separately.
-    """
+    """Score, filter, and sort decals: terms are ANDed (falling back to whichever decals matched the most, if none match all), ranked by average term score plus phrase bonus, then part number."""
     terms = normalize_text(query).split()
     if not terms:
         return []
