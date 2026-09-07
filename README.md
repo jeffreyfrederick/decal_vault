@@ -6,7 +6,9 @@ through PDFs on the documentation portal.
 
 Equipment hierarchy is Category → Model → Decal, with decals applying to
 multiple models as the normal case (e.g. one warning decal shared across a
-whole tire changer line). Decals are searchable and filterable by part
+whole tire changer line). A decal can also carry subcategory qualifiers
+(e.g. "Adapter", "Sensor"), each scoped to a single category for decals
+that span more than one. Decals are searchable and filterable by part
 number, description, model, category, language, and status, with both a
 card grid and a sortable table view.
 
@@ -68,6 +70,6 @@ platforms don't keep local disk around by default, so plan accordingly
 
 This is a proof-of-concept covering decals only - no bulk import, no
 multi-user auth (a single shared staff password gates upload/edit/delete),
-no linking to full manuals. See inline comments in `app/models.py` and
-`app/routes.py` for the data model and conventions behind the many-to-many
-decal↔model relationship.
+no linking to full manuals. The data model lives in `app/models.py`:
+`EquipmentModel` (category + name) and `Decal` are many-to-many, with
+`DecalSubcategory` holding the per-category qualifiers.
